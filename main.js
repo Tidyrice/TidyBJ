@@ -1,6 +1,8 @@
 const prefix = require("./scripts/config.js");
 const token = require("./scripts/token.js");
 
+const BJMap = new Map();
+
 //status
 client.on('ready', () => {
 	console.log("TidyBJ ready to feed your gambling addiction!");
@@ -32,7 +34,7 @@ client.on('message', async msg => {
     //blackjack
     if (command === "blackjack" || command === "bj") {
         const blackjack = require("./scripts/blackjack.js");
-        blackjack.blackjack(msg);
+        blackjack.blackjack(msg, args, BJMap);
     }
 
 });

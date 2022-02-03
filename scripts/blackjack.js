@@ -8,6 +8,8 @@ module.exports = {
                 return msg.reply( "**There is already a game in session!**");
 
             //create the BJ room
+            deck = ShuffleDeck();
+
             const BJRoom = {
                 username: msg.author.name,
                 deck: ShuffleDeck(),
