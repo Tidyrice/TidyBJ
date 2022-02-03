@@ -1,5 +1,6 @@
 const prefix = require("./scripts/config.js");
 const token = require("./scripts/token.js");
+const Discord = require('discord.js');
 
 const BJMap = new Map();
 
@@ -34,7 +35,7 @@ client.on('message', async msg => {
     //blackjack
     if (command === "blackjack" || command === "bj") {
         const blackjack = require("./scripts/blackjack.js");
-        blackjack.blackjack(msg, args, BJMap);
+        blackjack.blackjack(msg, args, BJMap, Discord);
     }
 
 });
