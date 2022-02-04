@@ -16,26 +16,43 @@ module.exports = {
             deck = ShuffleDeck();
 
             //create the BJ room
-            const BJRoom = {
+            const room = {
                 username: msg.author.name,
                 deck: deck[0],
                 cardValues: deck[1],
                 playerHand: [],
-                dealerHand: []
+                dealerHand: [],
+                //-1 = no winner. 0 = player wins. 1 = dealer wins
+                winner: -1
             }
 
+            //initial hands
+            room.playerHand.push(DrawCard());
+            room.dealerHand.push(DrawCard());
+
             //writes the room into the hashmap
-            BJMap.set(msg.author.id, BJRoom);
+            BJMap.set(msg.author.id, room);
+
+            //send embed
+            DisplayRoom();
 
         //HIT
         } else if (args[0] === "hit" || args[0] === "h") {
+
             const room = BJMap.get(msg.author.id);
+
+            //are they in a room?
             if (room == null)
                 return msg.reply(" **You are not currently in a game.**");
+            
+            
 
         //STAND
         } else if (args[0] === "stand" || args[0] === "s") {
+            
             const room = BJMap.get(msg.author.id);
+
+            //are they in a room?
             if (room == null)
                 return msg.reply(" **You are not currently in a game.**");
 
@@ -97,6 +114,14 @@ module.exports = {
             //puts the card (string) and value (integer) into an array for returning
             const cardArray = [card, value];
             return cardArray;
+        }
+
+        function DisplayRoom() {
+
+            //get the room from the hashmap
+            const room = BJMap.get(msg.author.id);
+
+            //EMBED
         }
     }
 }
