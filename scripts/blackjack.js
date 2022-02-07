@@ -18,8 +18,7 @@ module.exports = {
             //create the BJ room
             const room = {
                 username: msg.author.name,
-                deck: deck[0],
-                cardValues: deck[1],
+                deck: deck,
                 playerHand: [],
                 dealerHand: [],
                 //-1 = no winner. 0 = player wins. 1 = dealer wins
@@ -27,6 +26,7 @@ module.exports = {
             }
 
             //initial hands
+            room.playerHand.push(DrawCard());
             room.playerHand.push(DrawCard());
             room.dealerHand.push(DrawCard());
 
@@ -45,7 +45,14 @@ module.exports = {
             if (room == null)
                 return msg.reply(" **You are not currently in a game.**");
             
-            
+            //player draws a card
+            room.playerHand.push(DrawCard);
+
+            //dealer draws a card (or stands)
+            DealerDraw();
+
+            //check if game is over
+            HasWon();
 
         //STAND
         } else if (args[0] === "stand" || args[0] === "s") {
@@ -56,14 +63,16 @@ module.exports = {
             if (room == null)
                 return msg.reply(" **You are not currently in a game.**");
 
+            //dealer draws cards until 17 or bust
+            DealerDrawTo17();
+
+            //check if game is over
+            HasWon();
+
         } else {
             //if the command is neither "start", "hit", or "stand"
             return msg.reply(" **Parameter invalid.**");
         }
-
-
-
-
 
 
         function ShuffleDeck() {
@@ -89,37 +98,110 @@ module.exports = {
                 cardValues[indexB] = valueA;
             }
 
-            //puts the cards (strings) and values (integers) into an array for returning
-            const deckArray = [deck, cardValues];
-            return deckArray;
+            //puts the card (string) and value (integer) into an object for returning
+            const deckObject = {
+                cards: deck,
+                values: cardValues
+            };
+
+            return deckObject;
         }
 
         function DrawCard() {
 
-            //get the room from the hashmap
-            const room = BJMap.get(msg.author.id);
+            //removes first card from deck array and assigns it to a variable for returning
+            let cardObject = room.deck.shift();
 
-            let deck = room.deck;
-            let cardValues = room.cardValues;
+            return cardObject;
+        }
 
-            //removes first card from arrays and assigns it to variables
-            let card = deck.shift();
-            let value = cardValues.shift();
+        function DealerDraw() {
 
-            //writes the new deck into the hashmap
-            room.deck = deck;
-            room.cardValues = cardValues;
-            BJMap.set(msg.author.id, room);
+            const value = SumValues().dealer;
+
+            //if the value of the dealer's hand is less than 17, draw a card
+            if (value < 17)
+                room.dealerHand.push(DrawCard());
+        }
+
+        function DealerDrawTo17() {
+
+            const value = SumValues().dealer;
+
+            //if the value of the dealer's hand is less than 17, draw until 17
+            while (value < 17) {
+
+                room.dealerHand.push(DrawCard());
+
+                //update the "value" variable
+                value = SumValues().dealer;
+            }
+        }
+
+        function HasWon() {
+
+            //player and dealer values
+            const values = SumValues();
+            const playerValue = values.player;
+            const dealerValue = values.dealer;
+
+            //push
+            if (playerValue == dealerValue && playerValue <= 21) {
+
+            }
             
-            //puts the card (string) and value (integer) into an array for returning
-            const cardArray = [card, value];
-            return cardArray;
+            //player 21
+            if (playerValue == 21 && dealerValue < 21) {
+
+                //blackjack!
+                if (room.playerHand.length == 2) {
+
+                }
+
+            }
+
+            //dealer 21
+            if (playerValue < 21 && dealerValue == 21) {
+
+            }
+
+            //player bust
+            if (playerValue > 21 && dealerValue <= 21) {
+
+            }
+
+            //dealer bust
+            if (playerValue <= 21 && dealerValue > 21) {
+
+            }
+        }
+
+        function SumValues() {
+
+            //what is the value of the player's cards?
+            let playerValue = 0
+            for (i = 0; i < room.playerHand.length; i++) {
+                //index 1 in the second layer of the array is the value of the card
+                playerValue += room.playerHand[i].value;
+            }
+
+            //what is the value of the dealer's cards?
+            let dealerValue = 0
+            for (i = 0; i < room.dealerHand.length; i++) {
+                //index 1 in the second layer of the array is the value of the card
+                dealerValue += room.dealerHand[i].value;
+            }
+
+            //puts values into an object and returns
+            const values = {
+                player: playerValue,
+                dealer: dealerValue
+            };
+
+            return values;
         }
 
         function DisplayRoom() {
-
-            //get the room from the hashmap
-            const room = BJMap.get(msg.author.id);
 
             //EMBED
         }
