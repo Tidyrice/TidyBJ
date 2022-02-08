@@ -1,5 +1,19 @@
 {
   "dependencies": {
     "discord.js": "^13.6.0"
-  }
+  },
+  "name": "tidyblackjack",
+  "description": "Blackjack bot for Discord!",
+  "version": "1.0.0",
+  "main": "main.js",
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Tidyrice",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Tidyrice/TidyBJ/issues"
+  },
+  "homepage": "https://github.com/Tidyrice/TidyBJ#readme"
 }

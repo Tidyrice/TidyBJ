@@ -1,3 +1,1 @@
-module.exports = {
-    token = ""
-}
+module.exports = ""

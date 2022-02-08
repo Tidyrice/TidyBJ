@@ -5,19 +5,22 @@ module.exports = {
         if (args.length == 0)
             return msg.reply(" **Please specify a parameter!**");
 
+        //global variable: blackjack room
+        let room = BJMap.get(msg.author.id);
+
         //start the room
         if (args[0] === "start") {
 
             //if the game room already exists, exit
-            if (BJMap.get(msg.author.id))
+            if (BJMap.has(msg.author.id))
                 return msg.reply( "**There is already a game in session!**");
 
             //calls the ShuffleDeck function. Array index 0 are the cards (strings) and index 1 are card values (integers)
             deck = ShuffleDeck();
 
-            //create the BJ room
-            const room = {
-                username: msg.author.name,
+            //create the BJ room (local variable)
+            const BJroom = {
+                username: msg.author.username,
                 deck: deck,
                 playerHand: [],
                 dealerHand: [],
@@ -25,13 +28,16 @@ module.exports = {
                 winner: -1
             }
 
+            //updates the global variable "room"
+            room = BJroom
+
             //initial hands
-            room.playerHand.push(DrawCard());
-            room.playerHand.push(DrawCard());
-            room.dealerHand.push(DrawCard());
+            BJroom.playerHand.push(DrawCard());
+            BJroom.playerHand.push(DrawCard());
+            BJroom.dealerHand.push(DrawCard());
 
             //writes the room into the hashmap
-            BJMap.set(msg.author.id, room);
+            BJMap.set(msg.author.id, BJroom);
 
             //send embed
             DisplayRoom();
@@ -39,14 +45,12 @@ module.exports = {
         //HIT
         } else if (args[0] === "hit" || args[0] === "h") {
 
-            const room = BJMap.get(msg.author.id);
-
             //are they in a room?
             if (room == null)
                 return msg.reply(" **You are not currently in a game.**");
             
             //player draws a card
-            room.playerHand.push(DrawCard);
+            room.playerHand.push(DrawCard());
 
             //dealer draws a card (or stands)
             DealerDraw();
@@ -57,8 +61,6 @@ module.exports = {
         //STAND
         } else if (args[0] === "stand" || args[0] === "s") {
             
-            const room = BJMap.get(msg.author.id);
-
             //are they in a room?
             if (room == null)
                 return msg.reply(" **You are not currently in a game.**");
@@ -68,7 +70,6 @@ module.exports = {
 
             //check if game is over
             HasWon();
-
         } else {
             //if the command is neither "start", "hit", or "stand"
             return msg.reply(" **Parameter invalid.**");
@@ -78,7 +79,7 @@ module.exports = {
         function ShuffleDeck() {
             
             let deck = ["A♣️", "2♣️", "3♣️", "4♣️", "5♣️", "6♣️", "7♣️", "8♣️", "9♣️", "10♣️", "J♣️", "Q♣️", "K♣️", "A♠", "2♠", "3♠", "4♠", "5♠", "6♠", "7♠", "8♠", "9♠", "10♠", "J♠", "Q♠", "K♠", "A♥️", "2♥️", "3♥️", "4♥️", "5♥️", "6♥️", "7♥️", "8♥️", "9♥️", "10♥️", "J♥️", "Q♥️", "K♥️", "A♦️", "2♦️", "3♦️", "4♦️", "5♦️", "6♦️", "7♦️", "8♦️", "9♦️", "10♦️", "J♦️", "Q♦️", "K♦️"];
-            let cardValues = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
+            let cardValues = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10];
 
             //shuffle
             for (i = 0; i < 1000; i++) {
@@ -109,8 +110,15 @@ module.exports = {
 
         function DrawCard() {
 
-            //removes first card from deck array and assigns it to a variable for returning
-            let cardObject = room.deck.shift();
+            //removes first card from deck array and assigns it to a variable
+            let cardFace = room.deck.cards.shift();
+            let cardValue = room.deck.values.shift();
+
+            //puts the values into an object for returning
+            const cardObject = {
+                card: cardFace,
+                value: cardValue
+            };
 
             return cardObject;
         }
@@ -126,7 +134,7 @@ module.exports = {
 
         function DealerDrawTo17() {
 
-            const value = SumValues().dealer;
+            let value = SumValues().dealer;
 
             //if the value of the dealer's hand is less than 17, draw until 17
             while (value < 17) {
@@ -181,14 +189,12 @@ module.exports = {
             //what is the value of the player's cards?
             let playerValue = 0
             for (i = 0; i < room.playerHand.length; i++) {
-                //index 1 in the second layer of the array is the value of the card
                 playerValue += room.playerHand[i].value;
             }
 
             //what is the value of the dealer's cards?
             let dealerValue = 0
             for (i = 0; i < room.dealerHand.length; i++) {
-                //index 1 in the second layer of the array is the value of the card
                 dealerValue += room.dealerHand[i].value;
             }
 
@@ -201,9 +207,42 @@ module.exports = {
             return values;
         }
 
-        function DisplayRoom() {
+        function DisplayRoom() { //NOT COMPLETE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Imported from old project.
 
             //EMBED
+            const embed = new MessageEmbed()
+                .setColor('#0099ff')
+                .setTitle(item["EN-US"] + " " + enchantment)
+                //.setURL('https://discord.js.org/')
+                //.setAuthor('Some name', 'https://i.imgur.com/AfFp7pu.png', 'https://discord.js.org')
+                .setDescription(item["Description"])
+                .setThumbnail('https://i.imgur.com/AfFp7pu.png')
+                .addFields(
+                    { name: '\u200B', value: '\u200B' },
+                    { name: '<:Martlock:874209947678810113>  ' + 'Martlock ' + '<:Martlock:874209947678810113>', value: `Sell price: ${cityPrices[0].sell.price + cityPrices[0].sell.date}\n
+                        Buy price: ${cityPrices[0].buy.price + cityPrices[0].buy.date}`},
+                    { name: '\u200B', value: '\u200B' },
+                    { name: '<:Bridgewatch:874209993572900915> ' + 'Bridgewatch ' + '<:Bridgewatch:874209993572900915>', value: `Sell price: ${cityPrices[1].sell.price + cityPrices[1].sell.date}\n
+                        Buy price: ${cityPrices[1].buy.price + cityPrices[1].buy.date}`},
+                    { name: '\u200B', value: '\u200B' },
+                    { name: '<:Lymhurst:874210021922197534> ' + 'Lymhurst ' + '<:Lymhurst:874210021922197534>', value: `Sell price: ${cityPrices[2].sell.price + cityPrices[2].sell.date}\n
+                        Buy price: ${cityPrices[2].buy.price + cityPrices[2].buy.date}`},
+                    { name: '\u200B', value: '\u200B' },
+                    { name: '<:Fort_Sterling:874210038804258846> ' + 'Fort Sterling ' + '<:Fort_Sterling:874210038804258846>', value: `Sell price: ${cityPrices[3].sell.price + cityPrices[3].sell.date}\n
+                        Buy price: ${cityPrices[3].buy.price + cityPrices[3].buy.date}`},
+                    { name: '\u200B', value: '\u200B' },
+                    { name: '<:Thetford:874210055933788160> ' + 'Thetford ' + '<:Thetford:874210055933788160>', value: `Sell price: ${cityPrices[4].sell.price + cityPrices[4].sell.date}\n
+                        Buy price: ${cityPrices[4].buy.price + cityPrices[4].buy.date}`},
+                    { name: '\u200B', value: '\u200B' },
+                    { name: '<:Caerleon:874210071092031518> ' + 'Caerleon ' + '<:Caerleon:874210071092031518>', value: `Sell price: ${cityPrices[5].sell.price + cityPrices[5].sell.date}\n
+                        Buy price: ${cityPrices[5].buy.price + cityPrices[5].buy.date}`},
+                    { name: '\u200B', value: '\u200B' },
+                )
+                //.setImage('https://i.imgur.com/AfFp7pu.png')
+                .setTimestamp()
+                .setFooter('Retrieved', 'https://i.imgur.com/AfFp7pu.png');
+    
+            msg.channel.send({embeds: [embed]});
         }
     }
 }
