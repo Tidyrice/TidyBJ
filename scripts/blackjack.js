@@ -39,8 +39,8 @@ module.exports = {
             //writes the room into the hashmap
             BJMap.set(msg.author.id, BJroom);
 
-            //send embed
-            DisplayRoom();
+            //check if game is over. Also sends an embed to the discord channel
+            HasWon();
 
         //HIT
         } else if (args[0] === "hit" || args[0] === "h") {
@@ -55,7 +55,7 @@ module.exports = {
             //dealer draws a card (or stands)
             DealerDraw();
 
-            //check if game is over
+            //check if game is over. Also sends an embed to the discord channel
             HasWon();
 
         //STAND
@@ -68,8 +68,9 @@ module.exports = {
             //dealer draws cards until 17 or bust
             DealerDrawTo17();
 
-            //check if game is over
+            //check if game is over. Also sends an embed to the discord channel
             HasWon();
+
         } else {
             //if the command is neither "start", "hit", or "stand"
             return msg.reply(" **Parameter invalid.**");
@@ -146,44 +147,6 @@ module.exports = {
             }
         }
 
-        function HasWon() {
-
-            //player and dealer values
-            const values = SumValues();
-            const playerValue = values.player;
-            const dealerValue = values.dealer;
-
-            //push
-            if (playerValue == dealerValue && playerValue <= 21) {
-
-            }
-            
-            //player 21
-            if (playerValue == 21 && dealerValue < 21) {
-
-                //blackjack!
-                if (room.playerHand.length == 2) {
-
-                }
-
-            }
-
-            //dealer 21
-            if (playerValue < 21 && dealerValue == 21) {
-
-            }
-
-            //player bust
-            if (playerValue > 21 && dealerValue <= 21) {
-
-            }
-
-            //dealer bust
-            if (playerValue <= 21 && dealerValue > 21) {
-
-            }
-        }
-
         function SumValues() {
 
             //what is the value of the player's cards?
@@ -207,42 +170,100 @@ module.exports = {
             return values;
         }
 
-        function DisplayRoom() { //NOT COMPLETE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Imported from old project.
+        function HasWon() {
+
+            //player and dealer values
+            const values = SumValues();
+            const playerValue = values.player;
+            const dealerValue = values.dealer;
+
+            //no winner yet; game continues
+            if (playerValue < 21 && dealerValue < 21)
+                return DisplayRoom("", "");
+
+            //push
+            else if (playerValue == dealerValue && playerValue <= 21) {
+                DisplayRoom("Push!", "tie");
+            }
+            
+            //player 21
+            else if (playerValue == 21 && dealerValue < 21) {
+
+                //blackjack!
+                if (room.playerHand.length == 2) {
+                    DisplayRoom("Blackjack!", room.username);
+                } else {
+                DisplayRoom("Player wins!", room.username);
+                }
+            }
+
+            //dealer 21
+            else if (playerValue < 21 && dealerValue == 21) {
+                DisplayRoom("Dealer wins!", "Dealer");
+            }
+
+            //player bust
+            else if (playerValue > 21 && dealerValue <= 21) {
+                DisplayRoom("Player bust!", "Dealer");
+            }
+
+            //dealer bust
+            else if (playerValue <= 21 && dealerValue > 21) {
+                DisplayRoom("Dealer bust!", room.username);
+            }
+
+            //game over; delete room
+            BJMap.delete(msg.author.id);
+        }
+
+        function DisplayRoom(message, winner) {
+
+            //make string with player's card faces
+            let playerCards = ""
+            for (i = 0; i < room.playerHand.length; i++) {
+                playerValue += room.playerHand[i].card;
+            }
+
+            //make string with dealer's card faces
+            let dealerCards = ""
+            for (i = 0; i < room.dealerHand.length; i++) {
+                dealerValue += room.dealerHand[i].card;
+            }
 
             //EMBED
             const embed = new MessageEmbed()
                 .setColor('#0099ff')
-                .setTitle(item["EN-US"] + " " + enchantment)
+                .setTitle(room.username + "'s Blackjack Game")
                 //.setURL('https://discord.js.org/')
                 //.setAuthor('Some name', 'https://i.imgur.com/AfFp7pu.png', 'https://discord.js.org')
-                .setDescription(item["Description"])
-                .setThumbnail('https://i.imgur.com/AfFp7pu.png')
+                .setDescription(message)
+                .setThumbnail('https://www.pngitem.com/pimgs/m/82-824090_card-spade-poker-casino-playing-gamble-blackjack-png.png')
                 .addFields(
                     { name: '\u200B', value: '\u200B' },
-                    { name: '<:Martlock:874209947678810113>  ' + 'Martlock ' + '<:Martlock:874209947678810113>', value: `Sell price: ${cityPrices[0].sell.price + cityPrices[0].sell.date}\n
-                        Buy price: ${cityPrices[0].buy.price + cityPrices[0].buy.date}`},
+                    { name: '<:Martlock:874209947678810113>  ' + 'Your hand ' + '<:Martlock:874209947678810113>',
+                        value: playerCards},
+
                     { name: '\u200B', value: '\u200B' },
-                    { name: '<:Bridgewatch:874209993572900915> ' + 'Bridgewatch ' + '<:Bridgewatch:874209993572900915>', value: `Sell price: ${cityPrices[1].sell.price + cityPrices[1].sell.date}\n
-                        Buy price: ${cityPrices[1].buy.price + cityPrices[1].buy.date}`},
-                    { name: '\u200B', value: '\u200B' },
-                    { name: '<:Lymhurst:874210021922197534> ' + 'Lymhurst ' + '<:Lymhurst:874210021922197534>', value: `Sell price: ${cityPrices[2].sell.price + cityPrices[2].sell.date}\n
-                        Buy price: ${cityPrices[2].buy.price + cityPrices[2].buy.date}`},
-                    { name: '\u200B', value: '\u200B' },
-                    { name: '<:Fort_Sterling:874210038804258846> ' + 'Fort Sterling ' + '<:Fort_Sterling:874210038804258846>', value: `Sell price: ${cityPrices[3].sell.price + cityPrices[3].sell.date}\n
-                        Buy price: ${cityPrices[3].buy.price + cityPrices[3].buy.date}`},
-                    { name: '\u200B', value: '\u200B' },
-                    { name: '<:Thetford:874210055933788160> ' + 'Thetford ' + '<:Thetford:874210055933788160>', value: `Sell price: ${cityPrices[4].sell.price + cityPrices[4].sell.date}\n
-                        Buy price: ${cityPrices[4].buy.price + cityPrices[4].buy.date}`},
-                    { name: '\u200B', value: '\u200B' },
-                    { name: '<:Caerleon:874210071092031518> ' + 'Caerleon ' + '<:Caerleon:874210071092031518>', value: `Sell price: ${cityPrices[5].sell.price + cityPrices[5].sell.date}\n
-                        Buy price: ${cityPrices[5].buy.price + cityPrices[5].buy.date}`},
-                    { name: '\u200B', value: '\u200B' },
+                    { name: '<:Bridgewatch:874209993572900915> ' + "Dealer's hand " + '<:Bridgewatch:874209993572900915>',
+                        value: dealerCards},
                 )
                 //.setImage('https://i.imgur.com/AfFp7pu.png')
                 .setTimestamp()
-                .setFooter('Retrieved', 'https://i.imgur.com/AfFp7pu.png');
+                //.setFooter('Retrieved', 'https://i.imgur.com/AfFp7pu.png');
     
-            msg.channel.send({embeds: [embed]});
+                //send embed
+                msg.channel.send({embeds: [embed]
+            });
+
+            //send message
+            if (winner == "")
+                msg.channel.send(`Will ${room.username} hit or stand?`);
+            else if (winner == "tie") {
+                msg.channel.send("Standoff!")
+            }
+            else {
+                msg.channel.send(`${winner} wins!`)
+            }
         }
     }
 }
