@@ -26,7 +26,7 @@ client.on('messageCreate', async msg => {
 	if (!msg.content.startsWith(prefix) || msg.author.bot) return;
 
     //cuts message into component words
-    const args = msg.content.slice(prefix.length).trim().split(/ +/);
+    const args = msg.content.slice(prefix.length).trim().split(" ");
 	const command = args.shift().toLowerCase();
 
     //help
@@ -38,7 +38,7 @@ client.on('messageCreate', async msg => {
     //blackjack
     if (command === "blackjack" || command === "bj") {
         const blackjack = require("./scripts/blackjack.js");
-        blackjack.blackjack(msg, args, BJMap, Discord);
+        blackjack.blackjack(msg, args, BJMap, MessageEmbed);
     }
 
 });

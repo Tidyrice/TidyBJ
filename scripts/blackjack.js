@@ -1,5 +1,5 @@
 module.exports = {
-    blackjack: function(msg, args, BJMap, Discord) {
+    blackjack: function(msg, args, BJMap, MessageEmbed) {
 
         //dumbcheck
         if (args.length == 0)
@@ -24,8 +24,6 @@ module.exports = {
                 deck: deck,
                 playerHand: [],
                 dealerHand: [],
-                //-1 = no winner. 0 = player wins. 1 = dealer wins
-                winner: -1
             }
 
             //updates the global variable "room"
@@ -39,8 +37,8 @@ module.exports = {
             //writes the room into the hashmap
             BJMap.set(msg.author.id, BJroom);
 
-            //check if game is over. Also sends an embed to the discord channel
-            HasWon();
+            //check if game is over. Also sends an embed to the discord channel. The parameter is whether the player has stood.
+            HasWon(false);
 
         //HIT
         } else if (args[0] === "hit" || args[0] === "h") {
@@ -52,11 +50,8 @@ module.exports = {
             //player draws a card
             room.playerHand.push(DrawCard());
 
-            //dealer draws a card (or stands)
-            DealerDraw();
-
             //check if game is over. Also sends an embed to the discord channel
-            HasWon();
+            HasWon(false);
 
         //STAND
         } else if (args[0] === "stand" || args[0] === "s") {
@@ -69,23 +64,22 @@ module.exports = {
             DealerDrawTo17();
 
             //check if game is over. Also sends an embed to the discord channel
-            HasWon();
+            HasWon(true);
 
         } else {
             //if the command is neither "start", "hit", or "stand"
             return msg.reply(" **Parameter invalid.**");
         }
 
-
         function ShuffleDeck() {
             
             let deck = ["A♣️", "2♣️", "3♣️", "4♣️", "5♣️", "6♣️", "7♣️", "8♣️", "9♣️", "10♣️", "J♣️", "Q♣️", "K♣️", "A♠", "2♠", "3♠", "4♠", "5♠", "6♠", "7♠", "8♠", "9♠", "10♠", "J♠", "Q♠", "K♠", "A♥️", "2♥️", "3♥️", "4♥️", "5♥️", "6♥️", "7♥️", "8♥️", "9♥️", "10♥️", "J♥️", "Q♥️", "K♥️", "A♦️", "2♦️", "3♦️", "4♦️", "5♦️", "6♦️", "7♦️", "8♦️", "9♦️", "10♦️", "J♦️", "Q♦️", "K♦️"];
-            let cardValues = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10];
+            let cardValues = [11, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10, 11, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10, 11, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10, 11, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10];
 
-            //shuffle
-            for (i = 0; i < 1000; i++) {
-                let indexA = Math.floor(Math.random() * 53);
-                let indexB = Math.floor(Math.random() * 53);
+            //shuffle the deck 2000 times
+            for (i = 0; i < 2000; i++) {
+                let indexA = Math.floor(Math.random() * 52);
+                let indexB = Math.floor(Math.random() * 52);
 
                 //shuffle the cards
                 let cardA = deck[indexA];
@@ -122,15 +116,6 @@ module.exports = {
             };
 
             return cardObject;
-        }
-
-        function DealerDraw() {
-
-            const value = SumValues().dealer;
-
-            //if the value of the dealer's hand is less than 17, draw a card
-            if (value < 17)
-                room.dealerHand.push(DrawCard());
         }
 
         function DealerDrawTo17() {
@@ -170,15 +155,31 @@ module.exports = {
             return values;
         }
 
-        function HasWon() {
+        function HasWon(didPlayerStand) {
 
             //player and dealer values
             const values = SumValues();
-            const playerValue = values.player;
-            const dealerValue = values.dealer;
+            let playerValue = values.player;
+            let dealerValue = values.dealer;
 
-            //no winner yet; game continues
-            if (playerValue < 21 && dealerValue < 21)
+            //player has ACE (value 11) and is BUST
+            if (playerValue > 21 && IndexOfAce(room.playerHand) != -1) {
+                //update ACE to value 1
+                room.playerHand[IndexOfAce(room.playerHand)].value = 1;
+                //update playerValue variable
+                playerValue -= 10;
+            }
+
+            //dealer has ACE (value 11) and is BUST
+            if (dealerValue > 21 && IndexOfAce(room.dealerHand) != -1) {
+                //update ACE to value 1
+                room.dealerHand[IndexOfAce(room.dealerHand)].value = 1;
+                //update dealerValue variable
+                dealerValue -= 10;
+            }
+
+            //no winner yet; game continues. If the player DID stand, game is over, continue to else if
+            if (playerValue < 21 && dealerValue < 21 && !didPlayerStand)
                 return DisplayRoom("", "");
 
             //push
@@ -212,8 +213,32 @@ module.exports = {
                 DisplayRoom("Dealer bust!", room.username);
             }
 
+            //player has higher value
+            else if (playerValue > dealerValue) {
+                DisplayRoom("Player wins!", room.username);
+            }
+
+            //dealer has higher value
+            else if (dealerValue > playerValue) {
+                DisplayRoom("Dealer wins!", "Dealer");
+            }
+
             //game over; delete room
             BJMap.delete(msg.author.id);
+        }
+
+        function IndexOfAce(hand) {
+
+            let cardValues = [];
+
+            //puts all the card values into the array
+            for (i = 0; i < hand.length; i++) {
+                cardValues[i] = hand[i].value;
+            }
+
+            //what is the index of the first card with value 11 (ACE)?
+            const indexOfAce = cardValues.indexOf(11);
+            return indexOfAce;
         }
 
         function DisplayRoom(message, winner) {
@@ -221,13 +246,13 @@ module.exports = {
             //make string with player's card faces
             let playerCards = ""
             for (i = 0; i < room.playerHand.length; i++) {
-                playerValue += room.playerHand[i].card;
+                playerCards += room.playerHand[i].card;
             }
 
             //make string with dealer's card faces
             let dealerCards = ""
             for (i = 0; i < room.dealerHand.length; i++) {
-                dealerValue += room.dealerHand[i].card;
+                dealerCards += room.dealerHand[i].card;
             }
 
             //EMBED
@@ -240,16 +265,14 @@ module.exports = {
                 .setThumbnail('https://www.pngitem.com/pimgs/m/82-824090_card-spade-poker-casino-playing-gamble-blackjack-png.png')
                 .addFields(
                     { name: '\u200B', value: '\u200B' },
-                    { name: '<:Martlock:874209947678810113>  ' + 'Your hand ' + '<:Martlock:874209947678810113>',
+                    { name: "Your hand",
                         value: playerCards},
 
                     { name: '\u200B', value: '\u200B' },
-                    { name: '<:Bridgewatch:874209993572900915> ' + "Dealer's hand " + '<:Bridgewatch:874209993572900915>',
+                    { name: "Dealer's hand",
                         value: dealerCards},
                 )
-                //.setImage('https://i.imgur.com/AfFp7pu.png')
-                .setTimestamp()
-                //.setFooter('Retrieved', 'https://i.imgur.com/AfFp7pu.png');
+                .setFooter('TidyCasino', 'https://cdn.discordapp.com/avatars/795764421393776672/813fb837b8bba7d82d3ebb03ece0e50d.webp?size=80');
     
                 //send embed
                 msg.channel.send({embeds: [embed]
@@ -257,12 +280,12 @@ module.exports = {
 
             //send message
             if (winner == "")
-                msg.channel.send(`Will ${room.username} hit or stand?`);
+                msg.channel.send(`**Will ${room.username} hit or stand?**`);
             else if (winner == "tie") {
-                msg.channel.send("Standoff!")
+                msg.channel.send("**Standoff!**")
             }
             else {
-                msg.channel.send(`${winner} wins!`)
+                msg.channel.send(`**${winner} wins!**`)
             }
         }
     }
