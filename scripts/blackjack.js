@@ -265,11 +265,11 @@ module.exports = {
                 .setThumbnail('https://www.pngitem.com/pimgs/m/82-824090_card-spade-poker-casino-playing-gamble-blackjack-png.png')
                 .addFields(
                     { name: '\u200B', value: '\u200B' },
-                    { name: "Your hand",
+                    { name: "Your hand: " + SumValues().player,
                         value: playerCards},
 
                     { name: '\u200B', value: '\u200B' },
-                    { name: "Dealer's hand",
+                    { name: "Dealer's hand: " + SumValues().dealer,
                         value: dealerCards},
                 )
                 .setFooter('TidyCasino', 'https://cdn.discordapp.com/avatars/795764421393776672/813fb837b8bba7d82d3ebb03ece0e50d.webp?size=80');
